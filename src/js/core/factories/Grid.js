@@ -1391,7 +1391,9 @@ angular.module('ui.grid')
           else {
             finished.resolve(processedRows);
           }
-        }).catch(angular.noop);
+        }).catch(function(error) {
+          throw error;
+        });
     }
 
     // Start on the first processor
