@@ -3,7 +3,7 @@
 }
 
 .ui-grid-footer-panel-background {
-  .gradient(@headerBackgroundColor, @headerGradientStart, @headerGradientStop);
+  background-color: @headerBackgroundColor;
 }
 
 @topPanelRadius: @gridBorderRadius - @gridBorderWidth;
@@ -25,6 +25,14 @@
 .ui-grid-grid-footer {
   float: left;
   width: 100%;
+}
+
+.ui-grid-footer-viewport,
+.ui-grid-footer-canvas {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
 }
 
 .ui-grid-footer-viewport {

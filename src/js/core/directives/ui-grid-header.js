@@ -23,19 +23,19 @@
             $scope.colContainer = containerCtrl.colContainer;
 
             updateHeaderReferences();
-            
+
             var headerTemplate;
             if (!$scope.grid.options.showHeader) {
               headerTemplate = emptyTemplate;
             }
             else {
-              headerTemplate = ($scope.grid.options.headerTemplate) ? $scope.grid.options.headerTemplate : defaultTemplate;            
+              headerTemplate = ($scope.grid.options.headerTemplate) ? $scope.grid.options.headerTemplate : defaultTemplate;
             }
 
             gridUtil.getTemplate(headerTemplate)
               .then(function (contents) {
                 var template = angular.element(contents);
-                
+
                 var newElm = $compile(template)($scope);
                 $elm.replaceWith(newElm);
 
@@ -107,7 +107,7 @@
               // already being populated correctly
 
               var columnCache = containerCtrl.colContainer.visibleColumnCache;
-              
+
               // Build the CSS
               // uiGridCtrl.grid.columns.forEach(function (column) {
               var ret = '';
@@ -118,13 +118,13 @@
               });
 
               containerCtrl.colContainer.canvasWidth = canvasWidth;
-              
+
               // Return the styles back to buildStyles which pops them into the `customStyles` scope variable
               return ret;
             }
-            
+
             containerCtrl.header = $elm;
-            
+
             var headerViewport = $elm[0].getElementsByClassName('ui-grid-header-viewport')[0];
             if (headerViewport) {
               containerCtrl.headerViewport = headerViewport;

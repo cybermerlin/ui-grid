@@ -48,6 +48,15 @@ angular.module('ui.grid')
     // Default to true
     this.visible = true;
 
+     /**
+      *  @ngdoc object
+      *  @name isSelected
+      *  @propertyOf  ui.grid.class:GridRow
+      *  @description Marks if the row has been selected
+      */
+     // Default to false
+     this.isSelected = false;
+
 
     this.$$height = grid.options.rowHeight;
 

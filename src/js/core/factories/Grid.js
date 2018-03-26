@@ -199,11 +199,11 @@ angular.module('ui.grid')
 
     self.scrollbarHeight = 0;
     self.scrollbarWidth = 0;
-    if (self.options.enableHorizontalScrollbar === uiGridConstants.scrollbars.ALWAYS) {
+    if (self.options.enableHorizontalScrollbar !== uiGridConstants.scrollbars.NEVER) {
       self.scrollbarHeight = gridUtil.getScrollbarWidth();
     }
 
-    if (self.options.enableVerticalScrollbar === uiGridConstants.scrollbars.ALWAYS) {
+    if (self.options.enableVerticalScrollbar !== uiGridConstants.scrollbars.NEVER) {
       self.scrollbarWidth = gridUtil.getScrollbarWidth();
     }
 
@@ -434,8 +434,13 @@ angular.module('ui.grid')
      * the columnDef and you'd like headerCellClasses to be re-evaluated.
      * @param {string} type one of the
      * {@link ui.grid.service:uiGridConstants#properties_dataChange uiGridConstants.dataChange}
-     * values (ALL, ROW, EDIT, COLUMN), which tells us which refreshes to fire.
+     * values (ALL, ROW, EDIT, COLUMN, OPTIONS), which tells us which refreshes to fire.
      *
+     * - ALL: listeners fired on any of these events, fires listeners on all events.
+     * - ROW: fired when a row is added or removed.
+     * - EDIT: fired when the data in a cell is edited.
+     * - COLUMN: fired when the column definitions are modified.
+     * - OPTIONS: fired when the grid options are modified.
      */
     self.api.registerMethod( 'core', 'notifyDataChange', this.notifyDataChange );
 
@@ -621,7 +626,13 @@ angular.module('ui.grid')
    * api for users to tell us when they've changed data or some other event that
    * our watches cannot pick up
    * @param {string} type the type of event that occurred - one of the
-   * uiGridConstants.dataChange values (ALL, ROW, EDIT, COLUMN)
+   * uiGridConstants.dataChange values (ALL, ROW, EDIT, COLUMN, OPTIONS)
+   *
+   * - ALL: listeners fired on any of these events, fires listeners on all events.
+   * - ROW: fired when a row is added or removed.
+   * - EDIT: fired when the data in a cell is edited.
+   * - COLUMN: fired when the column definitions are modified.
+   * - OPTIONS: fired when the grid options are modified.
    */
   Grid.prototype.notifyDataChange = function notifyDataChange(type) {
     var constants = uiGridConstants.dataChange;
@@ -1181,7 +1192,7 @@ angular.module('ui.grid')
       }
     });
 
-    if (self.selection) {
+    if (self.selection && self.rows.length) {
       self.selection.selectAll = allRowsSelected;
     }
 
@@ -1251,7 +1262,7 @@ angular.module('ui.grid')
    * @description registered a styleComputation function
    *
    * If the function returns a value it will be appended into the grid's `<style>` block
-   * @param {function($scope)} styleComputation function
+   * @param {function($scope)} styleComputationInfo function
    */
   Grid.prototype.registerStyleComputation = function registerStyleComputation(styleComputationInfo) {
     this.styleComputations.push(styleComputationInfo);
@@ -1292,7 +1303,7 @@ angular.module('ui.grid')
    * to alter the set of rows (sorting, etc) as long as the count is not
    * modified.
    *
-   * @param {function(renderedRowsToProcess, columns )} processorFunction rows processor function, which
+   * @param {function(renderedRowsToProcess, columns )} processor rows processor function, which
    * is run in the context of the grid (i.e. this for the function will be the grid), and must
    * return the updated rows list, which is passed to the next processor in the chain
    * @param {number} priority the priority of this processor.  In general we try to do them in 100s to leave room
@@ -1316,7 +1327,7 @@ angular.module('ui.grid')
    * @ngdoc function
    * @name removeRowsProcessor
    * @methodOf ui.grid.class:Grid
-   * @param {function(renderableRows)} rows processor function
+   * @param {function(renderableRows)} processor processor function
    * @description Remove a registered rows processor
    */
   Grid.prototype.removeRowsProcessor = function removeRowsProcessor(processor) {
@@ -1336,8 +1347,7 @@ angular.module('ui.grid')
    * Private Undocumented Method
    * @name processRowsProcessors
    * @methodOf ui.grid.class:Grid
-   * @param {Array[GridRow]} The array of "renderable" rows
-   * @param {Array[GridColumn]} The array of columns
+   * @param {Array[GridRow]} renderableRows The array of "renderable" rows
    * @description Run all the registered rows processors on the array of renderable rows
    */
   Grid.prototype.processRowsProcessors = function processRowsProcessors(renderableRows) {
@@ -1437,7 +1447,7 @@ angular.module('ui.grid')
    * @ngdoc function
    * @name registerColumnsProcessor
    * @methodOf ui.grid.class:Grid
-   * @param {function(renderedColumnsToProcess, rows)} columnProcessor column processor function, which
+   * @param {function(renderedColumnsToProcess, rows)} processor column processor function, which
    * is run in the context of the grid (i.e. this for the function will be the grid), and
    * which must return an updated renderedColumnsToProcess which can be passed to the next processor
    * in the chain
@@ -2297,7 +2307,7 @@ angular.module('ui.grid')
 
   /**
    * @ngdoc function
-   * @name redrawCanvas
+   * @name redrawInPlace
    * @methodOf ui.grid.class:Grid
    * @description Redraw the rows and columns based on our current scroll position
    * @param {boolean} [rowsAdded] Optional to indicate rows are added and the scroll percentage must be recalculated

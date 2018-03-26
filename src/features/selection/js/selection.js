@@ -166,7 +166,7 @@
                  * @name rowSelectionChanged
                  * @eventOf  ui.grid.selection.api:PublicApi
                  * @description  is raised after the row.isSelected state is changed
-                 * @param {this} scope scope
+                 * @param {this} scope the scope associated with the grid
                  * @param {GridRow} row the row that was selected/deselected
                  * @param {Event} evt object if raised from an event
                  */
@@ -179,7 +179,7 @@
                  * in bulk, if the `enableSelectionBatchEvent` option is set to true
                  * (which it is by default).  This allows more efficient processing
                  * of bulk events.
-                 * @param {this} scope scope
+                 * @param {this} scope the scope associated with the grid
                  * @param {array} rows the rows that were selected/deselected
                  * @param {Event} evt object if raised from an event
                  */
@@ -208,7 +208,7 @@
                  * @methodOf  ui.grid.selection.api:PublicApi
                  * @description Select the data row
                  * @param {object} rowEntity gridOptions.data[] array instance
-                 * @param {Event} event object if raised from an event
+                 * @param {Event} evt object if raised from an event
                  */
                 selectRow: function (rowEntity, evt) {
                   var row = grid.getRow(rowEntity);
@@ -224,8 +224,8 @@
                  * specify row 0 you'll get the first visible row selected).  In this context
                  * visible means of those rows that are theoretically visible (i.e. not filtered),
                  * rather than rows currently rendered on the screen.
-                 * @param {number} index index within the rowsVisible array
-                 * @param {Event} event object if raised from an event
+                 * @param {number} rowNum index within the rowsVisible array
+                 * @param {Event} evt object if raised from an event
                  */
                 selectRowByVisibleIndex: function (rowNum, evt) {
                   var row = grid.renderContainers.body.visibleRowCache[rowNum];
@@ -239,7 +239,7 @@
                  * @methodOf  ui.grid.selection.api:PublicApi
                  * @description UnSelect the data row
                  * @param {object} rowEntity gridOptions.data[] array instance
-                 * @param {Event} event object if raised from an event
+                 * @param {Event} evt object if raised from an event
                  */
                 unSelectRow: function (rowEntity, evt) {
                   var row = grid.getRow(rowEntity);
@@ -249,61 +249,72 @@
                 },
                 /**
                  * @ngdoc function
+                 * @name unSelectRowByVisibleIndex
+                 * @methodOf  ui.grid.selection.api:PublicApi
+                 * @description Unselect the specified row by visible index (i.e. if you
+                 * specify row 0 you'll get the first visible row unselected).  In this context
+                 * visible means of those rows that are theoretically visible (i.e. not filtered),
+                 * rather than rows currently rendered on the screen.
+                 * @param {number} rowNum index within the rowsVisible array
+                 * @param {Event} evt object if raised from an event
+                 */
+                unSelectRowByVisibleIndex: function (rowNum, evt) {
+                  var row = grid.renderContainers.body.visibleRowCache[rowNum];
+                  if (row !== null && typeof (row) !== 'undefined' && row.isSelected) {
+                    service.toggleRowSelection(grid, row, evt, grid.options.multiSelect, grid.options.noUnselect);
+                  }
+                },
+                /**
+                 * @ngdoc function
                  * @name selectAllRows
                  * @methodOf  ui.grid.selection.api:PublicApi
                  * @description Selects all rows.  Does nothing if multiSelect = false
-                 * @param {Event} event object if raised from an event
+                 * @param {Event} evt object if raised from an event
                  */
                 selectAllRows: function (evt) {
-                  if (grid.options.multiSelect === false) {
-                    return;
+                  if (grid.options.multiSelect !== false) {
+                    var changedRows = [];
+                    grid.rows.forEach(function (row) {
+                      if (!row.isSelected && row.enableSelection !== false && grid.options.isRowSelectable(row) !== false) {
+                        row.setSelected(true);
+                        service.decideRaiseSelectionEvent(grid, row, changedRows, evt);
+                      }
+                    });
+                    service.decideRaiseSelectionBatchEvent(grid, changedRows, evt);
+                    grid.selection.selectAll = true;
                   }
-
-                  var changedRows = [];
-                  grid.rows.forEach(function (row) {
-                    if (!row.isSelected && row.enableSelection !== false) {
-                      row.setSelected(true);
-                      service.decideRaiseSelectionEvent(grid, row, changedRows, evt);
-                    }
-                  });
-                  service.decideRaiseSelectionBatchEvent(grid, changedRows, evt);
-                  grid.selection.selectAll = true;
                 },
                 /**
                  * @ngdoc function
                  * @name selectAllVisibleRows
                  * @methodOf  ui.grid.selection.api:PublicApi
                  * @description Selects all visible rows.  Does nothing if multiSelect = false
-                 * @param {Event} event object if raised from an event
+                 * @param {Event} evt object if raised from an event
                  */
                 selectAllVisibleRows: function (evt) {
-                  if (grid.options.multiSelect === false) {
-                    return;
-                  }
-
-                  var changedRows = [];
-                  grid.rows.forEach(function (row) {
-                    if (row.visible) {
-                      if (!row.isSelected && row.enableSelection !== false) {
-                        row.setSelected(true);
-                        service.decideRaiseSelectionEvent(grid, row, changedRows, evt);
-                      }
-                    } else {
-                      if (row.isSelected) {
+                  if (grid.options.multiSelect !== false) {
+                    var changedRows = [];
+                    grid.rows.forEach(function(row) {
+                      if (row.visible) {
+                        if (!row.isSelected && row.enableSelection !== false && grid.options.isRowSelectable(row) !== false) {
+                          row.setSelected(true);
+                          service.decideRaiseSelectionEvent(grid, row, changedRows, evt);
+                        }
+                      } else if (row.isSelected) {
                         row.setSelected(false);
                         service.decideRaiseSelectionEvent(grid, row, changedRows, evt);
                       }
-                    }
-                  });
-                  service.decideRaiseSelectionBatchEvent(grid, changedRows, evt);
-                  grid.selection.selectAll = true;
+                    });
+                    service.decideRaiseSelectionBatchEvent(grid, changedRows, evt);
+                    grid.selection.selectAll = true;
+                  }
                 },
                 /**
                  * @ngdoc function
                  * @name clearSelectedRows
                  * @methodOf  ui.grid.selection.api:PublicApi
                  * @description Unselects all rows
-                 * @param {Event} event object if raised from an event
+                 * @param {Event} evt object if raised from an event
                  */
                 clearSelectedRows: function (evt) {
                   service.clearSelectedRows(grid, evt);
@@ -317,6 +328,8 @@
                 getSelectedRows: function () {
                   return service.getSelectedRows(grid).map(function (gridRow) {
                     return gridRow.entity;
+                  }).filter(function (entity) {
+                    return entity.hasOwnProperty('$$hashKey');
                   });
                 },
                 /**
@@ -438,7 +451,7 @@
            *  @name enableFullRowSelection
            *  @propertyOf  ui.grid.selection.api:GridOptions
            *  @description Enable selection by clicking anywhere on the row.  Defaults to
-           *  false if `enableRowHeaderSelection` is true, otherwise defaults to true.
+           *  false if `enableRowHeaderSelection` is true, otherwise defaults to false.
            */
           if (typeof (gridOptions.enableFullRowSelection) === 'undefined') {
             gridOptions.enableFullRowSelection = !gridOptions.enableRowHeaderSelection;
@@ -486,6 +499,7 @@
            *  <br/>Defaults to 30px
            */
           gridOptions.selectionRowHeaderWidth = angular.isDefined(gridOptions.selectionRowHeaderWidth) ? gridOptions.selectionRowHeaderWidth : 30;
+
           /**
            *  @ngdoc object
            *  @name enableFooterTotalSelected
@@ -495,6 +509,7 @@
            *  <br/>GridOptions.showGridFooter must also be set to true.
            */
           gridOptions.enableFooterTotalSelected = gridOptions.enableFooterTotalSelected !== false;
+
           /**
            *  @ngdoc object
            *  @name isRowSelectable
@@ -773,6 +788,7 @@
               selectButtonClick(row, evt);
             }
           }
+
           function selectButtonClick(row, evt) {
             evt.stopPropagation();
 
@@ -834,11 +850,9 @@
                 self.api.selection.selectRowByVisibleIndex(0, evt);
               }
               self.selection.selectAll = false;
-            } else {
-              if (self.options.multiSelect) {
-                self.api.selection.selectAllVisibleRows(evt);
-                self.selection.selectAll = true;
-              }
+            } else if (self.options.multiSelect) {
+              self.api.selection.selectAllVisibleRows(evt);
+              self.selection.selectAll = true;
             }
           };
         }
@@ -982,7 +996,7 @@
               };
 
               function registerRowSelectionEvents() {
-                if ($scope.grid.options.enableRowSelection && $scope.grid.options.enableFullRowSelection) {
+              if ($scope.grid.options.enableRowSelection && $scope.grid.options.enableFullRowSelection && !$elm.hasClass('ui-grid-row-header-cell')) {
                   $elm.on('touchstart', touchStart);
                   $elm.on('touchend', touchEnd);
                   $elm.on('click', selectCells);
